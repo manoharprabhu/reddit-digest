@@ -25,12 +25,19 @@ const formatRedditToHTML = function(content) {
 }
 
 const createHTMLFromContent = function(content) {
-    let html = `<!DOCTYPE html><html><body style="line-height:1.5em;color:rgba(0,0,0,.8);fill: rgba(0,0,0,.8); ">`;
-    content.forEach(function(submission) {
+    let html = `<!DOCTYPE html><html><body style="padding-left:10px;padding-right:10px;line-height:1.5em;color:rgba(0,0,0,.8);fill: rgba(0,0,0,.8); ">
+                <div style="padding-top:50px;padding-bottom:50px;text-align:center; width:100%;font-size: 2em;"><strong>Writing Prompts</strong></div>
+    `;
+    content.writingPrompts.forEach(function(submission) {
         html += `<div style="margin-bottom: 3em;"><div style="font-size: 24px; font-weight: bold;margin-bottom:1em;">
             ${submission.title}
             </div> <div style="font-size: 16px;"> ${formatRedditToHTML(submission.content)}
             </div></div><hr />`;
+    });
+
+    html += `<div style="padding-top:200px;padding-bottom:50px;text-align:center; width:100%;font-size: 2em;"><strong>Shower Thoughts</strong></div>`
+    content.showerThoughts.forEach(function(thought) {
+        html += `<div style="width: 100%;padding:30px;font-style: oblique;"><span style="font-size: 1.5em">"</span>${thought}<span style="font-size: 1.5em">"</span></div><hr/>`
     });
     html += `</body></html>`;
     return html;
@@ -42,9 +49,7 @@ var generatePDF = function(content) {
     pdf.create(html, {
         "border": {
             "top": "0.1in",
-            "bottom": "0.1in",
-            "right": "0.2in",
-            "left": "0.2in"
+            "bottom": "0.1in"
         }
     }).toFile('./WritingPrompts-' + moment().format('DD-MM-YYYY-HHmmss') + '.pdf', function(err, res) {
         if (err) return console.log(err);
@@ -72,12 +77,19 @@ async function collectWritingPrompts(reddit) {
     return content;
 }
 
+async function collectShowerThoughts(reddit) {
+    const showerThoughts = await reddit.getSubreddit('ShowerThoughts').getTop({ time: 'day' });
+    console.log('Fetched ShowerThoughts of the day...');
+    return showerThoughts.map(function(thought) { return thought.title; });
+}
+
 async function main(reddit) {
     try {
         const writingPrompts = await collectWritingPrompts(reddit);
-        generatePDF(writingPrompts);
+        const showerThoughts = await collectShowerThoughts(reddit);
+        generatePDF({ writingPrompts, showerThoughts });
     } catch (e) {
-        console.log(e);
+        console.log('Error while fetching the content. Try again.');
     }
 }
 
