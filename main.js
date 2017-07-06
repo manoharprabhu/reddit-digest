@@ -52,7 +52,7 @@ var generatePDF = function(content) {
     });
 }
 
-async function main(reddit) {
+async function collectWritingPrompts(reddit) {
     const submissionList = await reddit.getSubreddit('WritingPrompts').getTop({ time: 'day' });
     console.log('Fetched top WritingPrompts of the day...');
     const content = [];
@@ -62,9 +62,23 @@ async function main(reddit) {
         if (comments.length >= 2) {
             content.push({ title: submissionList[i].title, content: comments[1].body });
         }
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        process.stdout.write(`${i+1}`);
     }
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
     console.log('Collected WritingPrompts and the top stories...');
-    generatePDF(content);
+    return content;
+}
+
+async function main(reddit) {
+    try {
+        const writingPrompts = await collectWritingPrompts(reddit);
+        generatePDF(writingPrompts);
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 main(reddit);
