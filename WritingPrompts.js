@@ -1,4 +1,4 @@
-const collectWritingPrompts = async function(reddit) {
+const collectWritingPrompts = async(reddit) => {
     const submissionList = await reddit.getSubreddit('WritingPrompts').getTop({ time: 'day' });
     console.log('Fetched top WritingPrompts of the day...');
     const content = [];

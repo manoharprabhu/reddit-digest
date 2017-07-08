@@ -3,11 +3,11 @@ const converter = new showdown.Converter();
 const pdf = require('html-pdf');
 const moment = require('moment');
 
-const formatRedditToHTML = function(content) {
+const formatRedditToHTML = (content) => {
     return converter.makeHtml(content);
 }
 
-const createHTMLFromContent = function(content) {
+const createHTMLFromContent = (content) => {
     let html = `<!DOCTYPE html><html><body style="padding-left:10px;padding-right:10px;line-height:1.5em;color:rgba(0,0,0,.8);fill: rgba(0,0,0,.8); ">
                 <div style="padding-top:50px;padding-bottom:50px;text-align:center; width:100%;font-size: 2em;"><strong>Writing Prompts</strong></div>
     `;
@@ -26,7 +26,7 @@ const createHTMLFromContent = function(content) {
     return html;
 }
 
-var generatePDF = function(content, outputPath) {
+var generatePDF = (content, outputPath) => {
     console.log('Generating PDF...');
     const html = createHTMLFromContent(content);
     pdf.create(html, {
