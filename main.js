@@ -1,95 +1,62 @@
-const snoowrap = require('snoowrap');
-const pdf = require('html-pdf');
-const moment = require('moment');
-const showdown = require('showdown');
-const converter = new showdown.Converter();
-let config;
+#!/usr/bin/env node --harmony-async-await
 
-try {
-    config = require('./config');
-} catch (e) {
-    console.log('Create config.js file with the reddit script access credentials');
+const snoowrap = require('snoowrap');
+const ShowerThoughts = require('./ShowerThoughts');
+const PdfGenerator = require('./PdfGenerator');
+const WritingPrompts = require('./WritingPrompts');
+const path = require('path');
+const fs = require('fs');
+
+if (process.argv.length != 4) {
+    console.log('Syntax: reddit-digest /path/to/reddit/config path/to/save/pdf');
     return 1;
 }
 
-const reddit = new snoowrap({
-    userAgent: config.userAgent,
-    clientId: config.clientId,
-    clientSecret: config.clientSecret,
-    username: config.reddit_username,
-    password: config.reddit_password
-});
+let configFilePath = path.resolve(process.argv[2]);
+let outputPath = path.resolve(process.argv[3]);
 
-const formatRedditToHTML = function(content) {
-    return converter.makeHtml(content);
-}
-
-const createHTMLFromContent = function(content) {
-    let html = `<!DOCTYPE html><html><body style="padding-left:10px;padding-right:10px;line-height:1.5em;color:rgba(0,0,0,.8);fill: rgba(0,0,0,.8); ">
-                <div style="padding-top:50px;padding-bottom:50px;text-align:center; width:100%;font-size: 2em;"><strong>Writing Prompts</strong></div>
-    `;
-    content.writingPrompts.forEach(function(submission) {
-        html += `<div style="margin-bottom: 3em;"><div style="font-size: 24px; font-weight: bold;margin-bottom:1em;">
-            ${submission.title}
-            </div> <div style="font-size: 16px;"> ${formatRedditToHTML(submission.content)}
-            </div></div><hr />`;
-    });
-
-    html += `<div style="padding-top:200px;padding-bottom:50px;text-align:center; width:100%;font-size: 2em;"><strong>Shower Thoughts</strong></div>`
-    content.showerThoughts.forEach(function(thought) {
-        html += `<div style="width: 100%;padding:30px;font-style: oblique;"><span style="font-size: 1.5em">"</span>${thought}<span style="font-size: 1.5em">"</span></div><hr/>`
-    });
-    html += `</body></html>`;
-    return html;
-}
-
-var generatePDF = function(content) {
-    console.log('Generating PDF...');
-    const html = createHTMLFromContent(content);
-    pdf.create(html, {
-        "border": {
-            "top": "0.1in",
-            "bottom": "0.1in"
-        }
-    }).toFile('./WritingPrompts-' + moment().format('DD-MM-YYYY-HHmmss') + '.pdf', function(err, res) {
-        if (err) return console.log(err);
-        console.log('Written content to ' + res.filename);
-    });
-}
-
-async function collectWritingPrompts(reddit) {
-    const submissionList = await reddit.getSubreddit('WritingPrompts').getTop({ time: 'day' });
-    console.log('Fetched top WritingPrompts of the day...');
-    const content = [];
-    console.log(`Fetching ${submissionList.length} stories...`);
-    for (let i = 0; i < submissionList.length; i++) {
-        const comments = await reddit.getSubmission(submissionList[i].id).comments;
-        if (comments.length >= 2) {
-            content.push({ title: submissionList[i].title, content: comments[1].body });
-        }
-        process.stdout.clearLine();
-        process.stdout.cursorTo(0);
-        process.stdout.write(`${i+1}`);
+try {
+    fs.lstatSync(outputPath).isDirectory();
+} catch (e) {
+    if (e.code == 'ENOENT') {
+        console.log('Output folder does not exist. Please create it before running the script.');
+    } else {
+        console.log(e);
     }
-    process.stdout.clearLine();
-    process.stdout.cursorTo(0);
-    console.log('Collected WritingPrompts and the top stories...');
-    return content;
+    return 1;
 }
 
-async function collectShowerThoughts(reddit) {
-    const showerThoughts = await reddit.getSubreddit('ShowerThoughts').getTop({ time: 'day' });
-    console.log('Fetched ShowerThoughts of the day...');
-    return showerThoughts.map(function(thought) { return thought.title; });
+let config;
+try {
+    config = require(configFilePath);
+} catch (e) {
+    console.log('Create config.json file with the reddit script access credentials');
+    return 1;
+}
+
+let reddit;
+try {
+    reddit = new snoowrap({
+        userAgent: config.userAgent,
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        username: config.reddit_username,
+        password: config.reddit_password
+    });
+} catch (e) {
+    console.log('Unable to create the reddit client. Check the config file.');
+    console.log(e);
+    return 1;
 }
 
 async function main(reddit) {
     try {
-        const writingPrompts = await collectWritingPrompts(reddit);
-        const showerThoughts = await collectShowerThoughts(reddit);
-        generatePDF({ writingPrompts, showerThoughts });
+        const writingPrompts = await WritingPrompts(reddit);
+        const showerThoughts = await ShowerThoughts(reddit);
+        PdfGenerator({ writingPrompts, showerThoughts }, outputPath);
     } catch (e) {
         console.log('Error while fetching the content. Try again.');
+        console.log(e);
     }
 }
 

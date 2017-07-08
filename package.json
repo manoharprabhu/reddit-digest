@@ -1,4 +1,6 @@
 {
+    "name": "reddit-digest",
+    "version": "1.0.0",
     "dependencies": {
         "escape-html": "^1.0.3",
         "html-pdf": "^2.1.0",
@@ -9,5 +11,11 @@
     },
     "scripts": {
         "start": "node --harmony-async-await main.js"
+    },
+    "engines": {
+        "node": ">= 7.0.0"
+    },
+    "bin": {
+        "reddit-digest": "main.js"
     }
 }
