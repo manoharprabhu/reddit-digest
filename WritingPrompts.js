@@ -10,10 +10,9 @@ const collectWritingPrompts = async(reddit) => {
         }
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
-        process.stdout.write(`${i+1}`);
+        process.stdout.write(`${i+1} / ${submissionList.length}`);
     }
-    process.stdout.clearLine();
-    process.stdout.cursorTo(0);
+    console.log();
     console.log('Collected WritingPrompts and the top stories...');
     return content;
 }
