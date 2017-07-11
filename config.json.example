@@ -1,0 +1,7 @@
+{
+    "userAgent": "reddit-digest-useragent",
+    "clientId": "your app client ID",
+    "clientSecret": "your app client secret",
+    "reddit_username": "your reddit username",
+    "reddit_password": "your reddit password"
+}

@@ -1,6 +1,8 @@
+const ConsoleWriter = require('./ConsoleWriter');
+
 const collectWritingPrompts = async(reddit) => {
     const submissionList = await reddit.getSubreddit('WritingPrompts').getTop({ time: 'day' });
-    console.log('Fetched top WritingPrompts of the day...');
+    ConsoleWriter('Fetched top WritingPrompts of the day...', false);
     const content = [];
     console.log(`Fetching ${submissionList.length} stories...`);
     for (let i = 0; i < submissionList.length; i++) {
@@ -8,12 +10,9 @@ const collectWritingPrompts = async(reddit) => {
         if (comments.length >= 2) {
             content.push({ title: submissionList[i].title, content: comments[1].body });
         }
-        process.stdout.clearLine();
-        process.stdout.cursorTo(0);
-        process.stdout.write(`${i+1} / ${submissionList.length}`);
+        ConsoleWriter(`${i+1} / ${submissionList.length}`, true);
     }
-    console.log();
-    console.log('Collected WritingPrompts and the top stories...');
+    ConsoleWriter('\nCollected WritingPrompts and the top stories...', false);
     return content;
 }
 
