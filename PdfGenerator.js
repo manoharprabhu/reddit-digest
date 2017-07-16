@@ -7,6 +7,16 @@ const formatRedditToHTML = (content) => {
     return converter.makeHtml(content);
 }
 
+const computeReadTime = function(content) {
+    const WORDS_PER_SECOND = 5;
+    const minutes = (content.split(" ").length / WORDS_PER_SECOND) / 60;
+    if (minutes < 1) {
+        return `<1 minute read`;
+    } else {
+        return `${parseInt(minutes)} minutes read`;
+    }
+}
+
 const createHTMLFromContent = (content) => {
     let html = `<!DOCTYPE html><html><body style="padding-left:10px;padding-right:10px;line-height:1.5em;color:rgba(0,0,0,.8);fill: rgba(0,0,0,.8); ">
                 <div style="padding-top:50px;padding-bottom:50px;text-align:center; width:100%;font-size: 2em;"><strong>Writing Prompts</strong></div>
@@ -14,7 +24,9 @@ const createHTMLFromContent = (content) => {
     content.writingPrompts.forEach(function(submission) {
         html += `<div style="margin-bottom: 3em;"><div style="font-size: 24px; font-weight: bold;margin-bottom:1em;">
             ${submission.title}
-            </div> <div style="font-size: 16px;"> ${formatRedditToHTML(submission.content)}
+            </div> 
+            <div style="font-size:14px;font-weight:bold;">${computeReadTime(submission.content)}</div>
+            <div style="font-size: 16px;"> ${formatRedditToHTML(submission.content)}
             </div></div><hr />`;
     });
 
